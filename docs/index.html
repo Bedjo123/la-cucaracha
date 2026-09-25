@@ -234,10 +234,11 @@ const ABI=[
 "function createItem(uint256 id,uint256 maxSupply,string itemURI)",
 "function mint(uint256 id,uint256 quantity)",
 "function mintTo(address recipient,uint256 id,uint256 quantity)",
-"function mintToMany(address[] recipients,uint256[] ids,uint256[] quantities)"
+"function mintToMany(address[] recipients,uint256[] ids,uint256[] quantities)",
+"function airdropMany(address[] recipients,uint256[] ids,uint256[] quantities)"
 ];
 let provider,signer,contract;
-let deployedContract="";
+let deployedContract="0x5470542D18043AeC7BB5E984d58E4Cf50dd4805A";
 const items=[];
 
 for(const [k,v] of Object.entries(CHAINS)){
