@@ -29,6 +29,60 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
 </style>
 </head>
 <body>
+
+<style>
+#lockScreen{position:fixed;inset:0;z-index:99999;background:#050507;display:flex;align-items:center;justify-content:center;padding:20px}
+#lockBox{width:min(420px,100%);background:#0d0e12;border:1px solid #ff1638;border-radius:22px;padding:26px;box-shadow:0 20px 80px #000}
+#lockBox h1{margin:0 0 8px;color:#fff}.lockRed{color:#ff1638}
+#unlockMsg{min-height:20px;color:#ff6b7f;font-size:13px;margin-top:8px}
+#appRoot{display:none}
+.traitRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.marketChecks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.marketCheck{display:flex;align-items:center;gap:8px;border:1px solid #333743;border-radius:12px;padding:11px;background:#090a0e}
+.marketCheck input{width:auto}
+.signalGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.signalBox{padding:14px;border:1px solid #333743;border-radius:14px;background:#090a0e}
+.signalBox b{display:block;font-size:22px;color:#fff}
+@media(max-width:650px){.signalGrid{grid-template-columns:repeat(2,1fr)}.traitRow,.marketChecks{grid-template-columns:1fr}}
+</style>
+<div id="lockScreen">
+  <div id="lockBox">
+    <div class="pill">PRIVATE ACCESS</div>
+    <h1><span class="lockRed">NFT 1155</span> STUDIO 38</h1>
+    <p class="muted">Enter your password to unlock the creator dashboard.</p>
+    <input id="studioPassword" type="password" autocomplete="current-password" placeholder="Password">
+    <button id="unlockBtn" style="margin-top:10px">UNLOCK</button>
+    <div id="unlockMsg"></div>
+  </div>
+</div>
+<script>
+(function(){
+  const KEY="studio38_unlocked_v1";
+  const gate=document.getElementById("lockScreen");
+  const app=document.getElementById("appRoot");
+  const input=document.getElementById("studioPassword");
+  const msg=document.getElementById("unlockMsg");
+  // The expected password is intentionally not stored in plaintext here.
+  // Replace PASSWORD_HASH below with a SHA-256 hash you generate locally.
+  const PASSWORD_HASH="REPLACE_WITH_SHA256_HASH";
+  async function sha256(s){
+    const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  }
+  function openApp(){gate.style.display="none";app.style.display="block";}
+  if(localStorage.getItem(KEY)==="1") openApp();
+  async function unlock(){
+    const h=await sha256(input.value);
+    if(PASSWORD_HASH!=="REPLACE_WITH_SHA256_HASH" && h===PASSWORD_HASH){
+      localStorage.setItem(KEY,"1"); openApp(); msg.textContent="";
+    } else msg.textContent="Invalid password.";
+  }
+  document.getElementById("unlockBtn").onclick=unlock;
+  input.addEventListener("keydown",e=>{if(e.key==="Enter")unlock();});
+})();
+</script>
+
+<div id="appRoot">
 <div class="wrap">
 <div class="hero">
   <div class="pill">ERC-1155 CREATOR</div>
@@ -61,6 +115,19 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
 <div class="card">
 <h2>Items</h2>
 <p class="muted">Add as many ERC-1155 items as needed. Each item gets its own Token ID, image, 5 traits, and supply.</p>
+
+<div class="card">
+<h2>Traits</h2>
+<p class="muted">Each item can have up to 5 traits. Enter a trait type and its value.</p>
+<div id="traitHelp">
+  <div class="traitRow"><input placeholder="Trait Type" class="trait-type"><input placeholder="Value" class="trait-value"></div>
+  <div class="traitRow"><input placeholder="Trait Type" class="trait-type"><input placeholder="Value" class="trait-value"></div>
+  <div class="traitRow"><input placeholder="Trait Type" class="trait-type"><input placeholder="Value" class="trait-value"></div>
+  <div class="traitRow"><input placeholder="Trait Type" class="trait-type"><input placeholder="Value" class="trait-value"></div>
+  <div class="traitRow"><input placeholder="Trait Type" class="trait-type"><input placeholder="Value" class="trait-value"></div>
+</div>
+</div>
+
 <div id="items"></div>
 <button id="add" class="secondary" style="margin-top:12px">+ ADD ITEM</button>
 </div>
@@ -106,6 +173,29 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
   <a id="elementLink" target="_blank" rel="noopener">Element</a>
   <a id="okxLink" target="_blank" rel="noopener">OKX Marketplace</a>
 </div>
+</div>
+
+
+<div class="card">
+<h2>Marketplaces</h2>
+<p class="muted">Select marketplaces you want to use. Availability and listing still depend on each marketplace's supported chain and rules.</p>
+<div class="marketChecks">
+  <label class="marketCheck"><input type="checkbox" value="OpenSea"> OpenSea</label>
+  <label class="marketCheck"><input type="checkbox" value="Rarible"> Rarible</label>
+  <label class="marketCheck"><input type="checkbox" value="Element"> Element</label>
+  <label class="marketCheck"><input type="checkbox" value="OKX"> OKX Marketplace</label>
+</div>
+</div>
+
+<div class="card">
+<h2>Buyer Signal</h2>
+<div class="signalGrid">
+  <div class="signalBox"><span class="muted">Minted</span><b id="sigMinted">0</b></div>
+  <div class="signalBox"><span class="muted">Unique Wallets</span><b id="sigWallets">—</b></div>
+  <div class="signalBox"><span class="muted">Remaining</span><b id="sigRemaining">—</b></div>
+  <div class="signalBox"><span class="muted">Mint Rate</span><b id="sigRate">—</b></div>
+</div>
+<p class="small muted" style="margin-top:12px">Activity metrics are informational and must come from real blockchain transactions after a contract is connected.</p>
 </div>
 
 <div class="card">
@@ -227,10 +317,16 @@ function panel(which){
 tabSelf.onclick=()=>panel("self");tabTo.onclick=()=>panel("to");tabAir.onclick=()=>panel("air");
 
 document.getElementById("download").onclick=()=>{
- const data={app:"NFT 1155 STUDIO 38",collection:collection.value,description:projectDesc.value,chain:chain.value,mintPrice:mintPrice.value,currency:currency.value,items};
+ const traits=[...document.querySelectorAll(".traitRow")].map(r=>({
+  trait_type:r.querySelector(".trait-type")?.value.trim()||"",
+  value:r.querySelector(".trait-value")?.value.trim()||""
+})).filter(x=>x.trait_type&&x.value);
+const marketplaces=[...document.querySelectorAll(".marketCheck input:checked")].map(x=>x.value);
+const data={app:"NFT 1155 STUDIO 38",collection:collection.value,description:projectDesc.value,chain:chain.value,mintPrice:mintPrice.value,currency:currency.value,traits,marketplaces,items};
  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nft-1155-project.json";a.click();
 };
 </script>
+</div>
 </body>
 </html>
