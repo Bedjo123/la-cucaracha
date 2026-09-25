@@ -290,26 +290,208 @@ function addItem(){
 addItem();
 
 async function connect(){
- if(!window.ethereum){st("Open this website in an EVM wallet browser.");return}
- try{
-  provider=new ethers.BrowserProvider(window.ethereum);
-  signer=await provider.getSigner();
-  document.getElementById("wallet").textContent="Connected: "+await signer.getAddress();
-  st("Wallet connected. Select your deployed ERC-1155 contract in the project configuration before minting.");
- }catch(e){st(e.shortMessage||e.message)}
+  if(!window.ethereum){
+    st("Open this website in an EVM wallet browser.");
+    return;
+  }
+
+  try{
+    provider=new ethers.BrowserProvider(window.ethereum);
+
+    await window.ethereum.request({
+      method:"eth_requestAccounts"
+    });
+
+    let network=await provider.getNetwork();
+
+    if(Number(network.chainId)!==8453){
+      try{
+        await window.ethereum.request({
+          method:"wallet_switchEthereumChain",
+          params:[{chainId:"0x2105"}]
+        });
+      }catch(e){
+        st("Please switch wallet to Base Mainnet.");
+        return;
+      }
+
+      provider=new ethers.BrowserProvider(window.ethereum);
+      network=await provider.getNetwork();
+    }
+
+    if(Number(network.chainId)!==8453){
+      st("Wallet is not on Base Mainnet.");
+      return;
+    }
+
+    signer=await provider.getSigner();
+
+    contract=new ethers.Contract(
+      deployedContract,
+      ABI,
+      signer
+    );
+
+    const address=await signer.getAddress();
+
+    document.getElementById("wallet").textContent=
+      "Connected: "+address;
+
+    st("Wallet connected. Base Mainnet.");
+  }catch(e){
+    console.error(e);
+    st("Connect error: "+(e.shortMessage||e.message));
+  }
 }
+
 async function needContract(){
- st("This UI is ready, but each selected chain needs the deployed ERC-1155 contract address. The address is intentionally not hard-coded.");
- throw new Error("Contract address not configured yet.");
+  if(!signer || !contract){
+    await connect();
+  }
+
+  if(!signer || !contract){
+    throw new Error("Connect wallet first.");
+  }
+
+  return contract;
 }
-async function mintSelf(){try{await needContract()}catch(e){st(e.message)}}
-async function mintTo(){try{await needContract()}catch(e){st(e.message)}}
-async function air(){try{
- const lines=document.getElementById("air").value.trim().split(/\n+/).filter(Boolean);
- if(lines.length>38)throw new Error("Airdrop is limited to 38 rows in this Studio.");
- lines.forEach(x=>{const [a,id,q]=x.split(",").map(s=>s.trim());if(!ethers.isAddress(a))throw new Error("Invalid wallet: "+a);if(!id||!q)throw new Error("Format: wallet,tokenId,quantity")});
- await needContract();
-}catch(e){st(e.message)}}
+
+async function mintSelf(){
+  try{
+    const c=await needContract();
+
+    st("Minting Token #1...");
+
+    const tx=await c.mint(
+      1,
+      1,
+      {value:0}
+    );
+
+    st("Waiting for transaction...");
+
+    await tx.wait();
+
+    st("PUBLIC MINT SUCCESS.");
+  }catch(e){
+    console.error(e);
+    st("Mint error: "+(e.shortMessage||e.message));
+  }
+}
+
+async function mintTo(){
+  try{
+    const c=await needContract();
+
+    const recipient=prompt("Recipient wallet address:");
+
+    if(!recipient){
+      st("Mint cancelled.");
+      return;
+    }
+
+    if(!ethers.isAddress(recipient.trim())){
+      st("Invalid recipient address.");
+      return;
+    }
+
+    st("Minting Token #1 to wallet...");
+
+    const tx=await c.mintTo(
+      recipient.trim(),
+      1,
+      1,
+      {value:0}
+    );
+
+    st("Waiting for transaction...");
+
+    await tx.wait();
+
+    st("MINT TO WALLET SUCCESS.");
+  }catch(e){
+    console.error(e);
+    st("Mint-to error: "+(e.shortMessage||e.message));
+  }
+}
+
+async function air(){
+  try{
+    const c=await needContract();
+
+    const field=document.getElementById("air");
+    const text=(field?.value||"").trim();
+
+    if(!text){
+      throw new Error("Enter wallet,tokenId,quantity.");
+    }
+
+    const lines=text
+      .split(/\n+/)
+      .map(x=>x.trim())
+      .filter(Boolean);
+
+    if(lines.length>38){
+      throw new Error("Maximum 38 wallets.");
+    }
+
+    const recipients=[];
+    const ids=[];
+    const quantities=[];
+
+    for(const line of lines){
+      const parts=line.split(",").map(x=>x.trim());
+
+      if(parts.length!==3){
+        throw new Error(
+          "Format: wallet,tokenId,quantity"
+        );
+      }
+
+      const [address,id,q]=parts;
+
+      if(!ethers.isAddress(address)){
+        throw new Error("Invalid wallet: "+address);
+      }
+
+      const tokenId=Number(id);
+      const quantity=Number(q);
+
+      if(!Number.isInteger(tokenId)||tokenId<0){
+        throw new Error("Invalid token ID: "+id);
+      }
+
+      if(!Number.isInteger(quantity)||quantity<=0){
+        throw new Error("Invalid quantity: "+q);
+      }
+
+      recipients.push(address);
+      ids.push(tokenId);
+      quantities.push(quantity);
+    }
+
+    st("Sending airdrop to "+recipients.length+" wallets...");
+
+    const tx=await c.airdropMany(
+      recipients,
+      ids,
+      quantities
+    );
+
+    st("Waiting for transaction...");
+
+    await tx.wait();
+
+    st(
+      "AIRDROP SUCCESS: "+
+      recipients.length+
+      " wallets."
+    );
+  }catch(e){
+    console.error(e);
+    st("Airdrop error: "+(e.shortMessage||e.message));
+  }
+}
 
 document.getElementById("connect").onclick=connect;
 document.getElementById("add").onclick=addItem;
