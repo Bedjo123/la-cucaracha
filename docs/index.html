@@ -72,13 +72,19 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
   function openApp(){gate.style.display="none";app.style.display="block";}
   if(localStorage.getItem(KEY)==="1") openApp();
   async function unlock(){
-  const h=await sha256(input.value);
-  if(h===PASSWORD_HASH){
-    localStorage.setItem(KEY,"1");
-    openApp();
-    msg.textContent="";
-  } else {
-    msg.textContent="Invalid password.";
+  try {
+    const value = input.value.trim();
+    const h = await sha256(value);
+
+    if (h === PASSWORD_HASH) {
+      localStorage.setItem(KEY, "1");
+      openApp();
+      msg.textContent = "";
+    } else {
+      msg.textContent = "Invalid password.";
+    }
+  } catch (e) {
+    msg.textContent = "Unlock error: " + e.message;
   }
 }
 document.getElementById("unlockBtn").onclick=unlock;
