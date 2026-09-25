@@ -35,7 +35,7 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
 #lockBox{width:min(420px,100%);background:#0d0e12;border:1px solid #ff1638;border-radius:22px;padding:26px;box-shadow:0 20px 80px #000}
 #lockBox h1{margin:0 0 8px;color:#fff}.lockRed{color:#ff1638}
 #unlockMsg{min-height:20px;color:#ff6b7f;font-size:13px;margin-top:8px}
-#appRoot{display:none}
+#appRoot{display:block}
 .traitRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .marketChecks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .marketCheck{display:flex;align-items:center;gap:8px;border:1px solid #333743;border-radius:12px;padding:11px;background:#090a0e}
@@ -69,7 +69,7 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
     const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
     return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
   }
-  function openApp(){gate.style.display="none";app.style.display="block";}
+  function openApp(){gate.style.display="none";if(app)app.style.display="block";}
   openApp();
   async function unlock(){
   try {
