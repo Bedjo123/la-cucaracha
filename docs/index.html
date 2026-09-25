@@ -1,471 +1,189 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>La Cucaracha by Tony Babel</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
-
+<title>NFT 1155 STUDIO 38</title>
 <style>
-body{
-  margin:0;
-  background:#111;
-  color:white;
-  font-family:Arial,sans-serif;
-}
-.container{
-  max-width:460px;
-  margin:auto;
-  padding:25px 18px 50px;
-  text-align:center;
-}
-img{
-  width:100%;
-  max-height:430px;
-  object-fit:contain;
-  border-radius:16px;
-}
-button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border:0;
-  border-radius:10px;
-  font-size:16px;
-  font-weight:bold;
-}
-.connect{
-  background:white;
-  color:black;
-}
-.mint{
-  background:#00d084;
-  color:#000;
-}
-.mode{
-  background:#333;
-  color:white;
-}
-.mode.active{
-  background:#666;
-}
-input,textarea{
-  width:100%;
-  box-sizing:border-box;
-  padding:13px;
-  margin-top:10px;
-  border-radius:8px;
-  border:1px solid #555;
-  background:#222;
-  color:white;
-  font-size:15px;
-}
-textarea{
-  min-height:130px;
-}
-.hidden{
-  display:none;
-}
-#status{
-  margin-top:18px;
-  word-break:break-word;
-}
-.small{
-  color:#aaa;
-}
+*{box-sizing:border-box}body{margin:0;background:#0b0d12;color:#f5f5f5;font-family:system-ui,-apple-system,Segoe UI,Arial}
+.wrap{max-width:1050px;margin:auto;padding:22px}.hero{padding:26px 0}.hero h1{font-size:34px;margin:0 0 8px}.muted{color:#9ca3af}
+.card{background:#151922;border:1px solid #292f3b;border-radius:18px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{display:block;font-size:13px;color:#cbd5e1}input,textarea,select,button{width:100%;padding:12px;border-radius:10px;border:1px solid #394150;background:#0e1117;color:#fff;font:inherit}textarea{min-height:100px;resize:vertical}
+button{background:#fff;color:#111;font-weight:800;cursor:pointer}.secondary{background:#232936;color:#fff}.danger{background:#3a1d24;color:#fff}
+.item{border:1px solid #303746;border-radius:14px;padding:15px;margin-top:12px}.item h3{margin:0 0 12px}.preview{max-width:150px;max-height:150px;border-radius:12px;margin-top:8px;display:block}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.hidden{display:none}.status{white-space:pre-wrap;word-break:break-word}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #303746;text-align:left}
+.small{font-size:12px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#232936;color:#cbd5e1}
 </style>
 </head>
-
 <body>
-
-<div class="container">
-
-<h1>La Cucaracha</h1>
-<h3>by Tony Babel</h3>
-
-<img src="https://raw.githubusercontent.com/Bedjo123/la-cucaracha/main/artwork.png">
-
-<h2>FREE MINT</h2>
-
-<p>Remaining: <b id="remaining">...</b></p>
-
-<button class="connect" id="connect">CONNECT WALLET</button>
-
-<p id="wallet" class="small"></p>
-
-<hr>
-
-<button class="mode active" id="selfMode">
-MINT SENDIRI
-</button>
-
-<button class="mode" id="oneMode">
-MINT KE 1 WALLET
-</button>
-
-<button class="mode" id="manyMode">
-MINT KE BANYAK WALLET
-</button>
-
-<div id="selfBox">
-
-<input id="selfQty" type="number" min="1" value="1">
-
-<button class="mint" id="selfMint" disabled>
-MINT KE WALLET SENDIRI
-</button>
-
+<div class="wrap">
+<div class="hero">
+  <div class="pill">ERC-1155 CREATOR</div>
+  <h1>NFT 1155 STUDIO 38</h1>
+  <p class="muted">Create multi-item ERC-1155 collections, public mint, mint-to-wallet, and Airdrop 38.</p>
 </div>
 
-<div id="oneBox" class="hidden">
-
-<input
-id="recipient"
-placeholder="0x... wallet penerima"
->
-
-<input
-id="oneQty"
-type="number"
-min="1"
-value="1"
->
-
-<button class="mint" id="oneMint" disabled>
-MINT KE WALLET
-</button>
-
+<div class="card">
+<h2>Project</h2>
+<div class="grid">
+<label>Collection name<input id="collection" placeholder="La Cucaracha by Tony Babel"></label>
+<label>Project description<textarea id="projectDesc" placeholder="Optional"></textarea></label>
+<label>Chain<select id="chain"></select></label>
+</div>
+<div style="margin-top:12px"><button id="connect">CONNECT WALLET</button></div>
+<p id="wallet" class="muted"></p>
 </div>
 
-<div id="manyBox" class="hidden">
-
-<p class="small">
-Satu wallet per baris. Format:<br>
-alamat,quantity
-</p>
-
-<textarea id="recipients"
-placeholder="0x1111...,1
-0x2222...,2
-0x3333...,1"></textarea>
-
-<button class="mint" id="manyMint" disabled>
-MINT KE BANYAK WALLET
-</button>
-
+<div class="card">
+<h2>Items</h2>
+<p class="muted">Add as many ERC-1155 items as needed. Each item gets its own Token ID, image, 5 traits, and supply.</p>
+<div id="items"></div>
+<button id="add" class="secondary" style="margin-top:12px">+ ADD ITEM</button>
 </div>
 
-<div id="status"></div>
-
+<div class="card">
+<h2>Mint / Airdrop</h2>
+<div class="tabs">
+<button id="tabSelf">PUBLIC MINT</button>
+<button id="tabTo" class="secondary">MINT TO WALLET</button>
+<button id="tabAir" class="secondary">AIRDROP 38</button>
 </div>
 
+<div id="selfPanel" style="margin-top:14px">
+<div class="grid">
+<label>Token ID<input id="selfId" type="number" min="1" value="1"></label>
+<label>Quantity<input id="selfQty" type="number" min="1" value="1"></label>
+</div>
+<button id="mintSelf" style="margin-top:10px">MINT</button>
+</div>
+
+<div id="toPanel" class="hidden" style="margin-top:14px">
+<div class="grid">
+<label>Recipient wallet<input id="toAddr" placeholder="0x..."></label>
+<label>Token ID<input id="toId" type="number" min="1" value="1"></label>
+<label>Quantity<input id="toQty" type="number" min="1" value="1"></label>
+</div>
+<button id="mintTo" style="margin-top:10px">MINT TO WALLET</button>
+</div>
+
+<div id="airPanel" class="hidden" style="margin-top:14px">
+<p class="muted">Isi sampai 38 baris: <b>wallet,tokenId,quantity</b></p>
+<textarea id="air" rows="12" placeholder="0x...,1,1&#10;0x...,2,1"></textarea>
+<button id="airBtn" style="margin-top:10px">AIRDROP</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Project JSON</h2>
+<button id="download" class="secondary">DOWNLOAD PROJECT CONFIG</button>
+</div>
+
+<div class="card">
+<h2>Status</h2>
+<div id="status" class="status muted">Ready.</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
 <script>
-
-const CONTRACT =
-"0x7eBaB889C8F04af49d9133a14A1d2DbD6D9ABbE8";
-
-const MAX_SUPPLY = 100;
-
-const ABI = [
-"function mint(uint256 quantity)",
-"function mintTo(address recipient,uint256 quantity)",
-"function mintToMany(address[] recipients,uint256[] quantities)",
-"function totalMinted() view returns(uint256)"
+const CHAINS={
+ base:{name:"Base",id:8453,rpc:"https://mainnet.base.org"},
+ robinhood:{name:"Robinhood",id:4663,rpc:"https://rpc.mainnet.chain.robinhood.com"},
+ shape:{name:"Shape",id:360,rpc:"https://mainnet.shape.network"},
+ arbitrum:{name:"Arbitrum One",id:42161,rpc:"https://arb1.arbitrum.io/rpc"},
+ polygon:{name:"Polygon",id:137,rpc:"https://polygon-rpc.com"},
+ ink:{name:"Ink",id:57073,rpc:"https://rpc-gel.inkonchain.com"},
+ arc:{name:"Arc — configure network",id:null,rpc:""}
+};
+const ABI=[
+"function createItem(uint256 id,uint256 maxSupply,string itemURI)",
+"function mint(uint256 id,uint256 quantity)",
+"function mintTo(address recipient,uint256 id,uint256 quantity)",
+"function mintToMany(address[] recipients,uint256[] ids,uint256[] quantities)"
 ];
+let provider,signer,contract;
+const items=[];
 
-const CHAIN_ID = "0x2105";
-
-let provider;
-let signer;
-let contract;
-
-const connect = document.getElementById("connect");
-const status = document.getElementById("status");
-const remaining = document.getElementById("remaining");
-const wallet = document.getElementById("wallet");
-
-const selfMint = document.getElementById("selfMint");
-const oneMint = document.getElementById("oneMint");
-const manyMint = document.getElementById("manyMint");
-
-async function connectWallet(){
-
-  if(!window.ethereum){
-    status.innerText =
-      "Wallet tidak ditemukan. Buka website dari browser/DApp browser wallet.";
-    return;
-  }
-
-  try{
-
-    await window.ethereum.request({
-      method:"wallet_switchEthereumChain",
-      params:[{chainId:CHAIN_ID}]
-    });
-
-  }catch(e){
-
-    status.innerText =
-      "Silakan pilih jaringan Base di wallet.";
-    return;
-
-  }
-
-  provider = new ethers.BrowserProvider(window.ethereum);
-
-  signer = await provider.getSigner();
-
-  contract =
-    new ethers.Contract(CONTRACT,ABI,signer);
-
-  const address =
-    await signer.getAddress();
-
-  wallet.innerText =
-    address.slice(0,8)+"..."+address.slice(-6);
-
-  connect.innerText = "WALLET CONNECTED";
-
-  selfMint.disabled=false;
-  oneMint.disabled=false;
-  manyMint.disabled=false;
-
-  await updateSupply();
+for(const [k,v] of Object.entries(CHAINS)){
+ const o=document.createElement("option");o.value=k;o.textContent=v.name;chain.appendChild(o);
 }
+function st(x){document.getElementById("status").textContent=x}
+function esc(x){return String(x||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 
-async function updateSupply(){
-
-  if(!contract) return;
-
-  const minted =
-    Number(await contract.totalMinted());
-
-  remaining.innerText =
-    Math.max(0,MAX_SUPPLY-minted);
+function render(){
+ const box=document.getElementById("items");box.innerHTML="";
+ items.forEach((it,n)=>{
+  const d=document.createElement("div");d.className="item";
+  d.innerHTML=`<h3>Item #${it.id} <span class="muted">Token ID ${it.id}</span></h3>
+  <div class="grid">
+   <label>Name<input data-f="name" value="${esc(it.name)}"></label>
+   <label>Supply <span class="small">(0 = unlimited)</span><input data-f="supply" type="number" min="0" value="${it.supply}"></label>
+   <label>Description<textarea data-f="desc">${esc(it.desc)}</textarea></label>
+   <label>Image<input data-file type="file" accept="image/*"></label>
+  </div>
+  <div class="grid">
+   ${it.traits.map((x,i)=>`<label>Trait ${i+1}<input data-trait="${i}" value="${esc(x)}"></label>`).join("")}
+  </div>`;
+  d.querySelectorAll("[data-f]").forEach(e=>e.oninput=()=>it[e.dataset.f]=e.value);
+  d.querySelectorAll("[data-trait]").forEach(e=>e.oninput=()=>it.traits[+e.dataset.trait]=e.value);
+  d.querySelector("[data-file]").onchange=e=>{
+    it.file=e.target.files[0]||null;
+    if(it.file){it.image=it.file.name;const im=document.createElement("img");im.className="preview";im.src=URL.createObjectURL(it.file);d.appendChild(im)}
+  };
+  box.appendChild(d);
+ });
 }
-
-async function mintSelf(){
-
-  try{
-
-    const qty =
-      Number(document.getElementById("selfQty").value);
-
-    if(!Number.isInteger(qty)||qty<1){
-      status.innerText="Quantity tidak valid.";
-      return;
-    }
-
-    selfMint.disabled=true;
-
-    status.innerText=
-      "Konfirmasi transaksi di wallet...";
-
-    const tx =
-      await contract.mint(qty);
-
-    status.innerText=
-      "Transaksi: "+tx.hash;
-
-    await tx.wait();
-
-    status.innerText=
-      "MINT BERHASIL.";
-
-    await updateSupply();
-
-  }catch(e){
-
-    status.innerText=
-      "Gagal: "+(e.shortMessage||e.message);
-
-  }
-
-  selfMint.disabled=false;
+function addItem(){
+ items.push({id:items.length+1,name:"",desc:"",supply:0,traits:["","","","",""],image:""});
+ render();
 }
+addItem();
 
-async function mintOne(){
-
-  try{
-
-    const recipient =
-      document.getElementById("recipient").value.trim();
-
-    const qty =
-      Number(document.getElementById("oneQty").value);
-
-    if(!ethers.isAddress(recipient)){
-      status.innerText="Alamat wallet tidak valid.";
-      return;
-    }
-
-    if(!Number.isInteger(qty)||qty<1){
-      status.innerText="Quantity tidak valid.";
-      return;
-    }
-
-    oneMint.disabled=true;
-
-    status.innerText=
-      "Konfirmasi transaksi di wallet...";
-
-    const tx =
-      await contract.mintTo(recipient,qty);
-
-    status.innerText=
-      "Transaksi: "+tx.hash;
-
-    await tx.wait();
-
-    status.innerText=
-      "NFT berhasil dikirim ke wallet penerima.";
-
-    await updateSupply();
-
-  }catch(e){
-
-    status.innerText=
-      "Gagal: "+(e.shortMessage||e.message);
-
-  }
-
-  oneMint.disabled=false;
+async function connect(){
+ if(!window.ethereum){st("Open this website in an EVM wallet browser.");return}
+ try{
+  provider=new ethers.BrowserProvider(window.ethereum);
+  signer=await provider.getSigner();
+  document.getElementById("wallet").textContent="Connected: "+await signer.getAddress();
+  st("Wallet connected. Select your deployed ERC-1155 contract in the project configuration before minting.");
+ }catch(e){st(e.shortMessage||e.message)}
 }
-
-async function mintMany(){
-
-  try{
-
-    const text =
-      document.getElementById("recipients").value.trim();
-
-    if(!text){
-      status.innerText="Masukkan daftar wallet.";
-      return;
-    }
-
-    const lines =
-      text.split("\n")
-      .map(x=>x.trim())
-      .filter(Boolean);
-
-    const addresses=[];
-    const quantities=[];
-
-    for(const line of lines){
-
-      const parts =
-        line.split(",").map(x=>x.trim());
-
-      if(parts.length!==2){
-        throw new Error(
-          "Format harus: alamat,quantity"
-        );
-      }
-
-      const address=parts[0];
-      const qty=Number(parts[1]);
-
-      if(!ethers.isAddress(address)){
-        throw new Error(
-          "Alamat tidak valid: "+address
-        );
-      }
-
-      if(!Number.isInteger(qty)||qty<1){
-        throw new Error(
-          "Quantity tidak valid: "+address
-        );
-      }
-
-      addresses.push(address);
-      quantities.push(qty);
-    }
-
-    const total =
-      quantities.reduce((a,b)=>a+b,0);
-
-    const current =
-      Number(await contract.totalMinted());
-
-    if(current+total>MAX_SUPPLY){
-      throw new Error(
-        "Melebihi supply. Sisa: "+
-        (MAX_SUPPLY-current)
-      );
-    }
-
-    manyMint.disabled=true;
-
-    status.innerText=
-      "Konfirmasi batch mint di wallet...";
-
-    const tx =
-      await contract.mintToMany(
-        addresses,
-        quantities
-      );
-
-    status.innerText=
-      "Transaksi: "+tx.hash;
-
-    await tx.wait();
-
-    status.innerText=
-      "BATCH MINT BERHASIL: "+
-      addresses.length+" wallet.";
-
-    await updateSupply();
-
-  }catch(e){
-
-    status.innerText=
-      "Gagal: "+(e.shortMessage||e.message);
-
-  }
-
-  manyMint.disabled=false;
+async function needContract(){
+ st("This UI is ready, but each selected chain needs the deployed ERC-1155 contract address. The address is intentionally not hard-coded.");
+ throw new Error("Contract address not configured yet.");
 }
+async function mintSelf(){try{await needContract()}catch(e){st(e.message)}}
+async function mintTo(){try{await needContract()}catch(e){st(e.message)}}
+async function air(){try{
+ const lines=document.getElementById("air").value.trim().split(/\n+/).filter(Boolean);
+ if(lines.length>38)throw new Error("Airdrop is limited to 38 rows in this Studio.");
+ lines.forEach(x=>{const [a,id,q]=x.split(",").map(s=>s.trim());if(!ethers.isAddress(a))throw new Error("Invalid wallet: "+a);if(!id||!q)throw new Error("Format: wallet,tokenId,quantity")});
+ await needContract();
+}catch(e){st(e.message)}}
 
-function mode(type){
+document.getElementById("connect").onclick=connect;
+document.getElementById("add").onclick=addItem;
+document.getElementById("mintSelf").onclick=mintSelf;
+document.getElementById("mintTo").onclick=mintTo;
+document.getElementById("airBtn").onclick=air;
 
-  document.getElementById("selfBox")
-    .classList.toggle("hidden",type!=="self");
-
-  document.getElementById("oneBox")
-    .classList.toggle("hidden",type!=="one");
-
-  document.getElementById("manyBox")
-    .classList.toggle("hidden",type!=="many");
-
-  document.querySelectorAll(".mode")
-    .forEach(x=>x.classList.remove("active"));
-
-  if(type==="self")
-    document.getElementById("selfMode").classList.add("active");
-
-  if(type==="one")
-    document.getElementById("oneMode").classList.add("active");
-
-  if(type==="many")
-    document.getElementById("manyMode").classList.add("active");
+function panel(which){
+ selfPanel.classList.toggle("hidden",which!=="self");
+ toPanel.classList.toggle("hidden",which!=="to");
+ airPanel.classList.toggle("hidden",which!=="air");
+ tabSelf.className=which==="self"?"":"secondary";
+ tabTo.className=which==="to"?"":"secondary";
+ tabAir.className=which==="air"?"":"secondary";
 }
+tabSelf.onclick=()=>panel("self");tabTo.onclick=()=>panel("to");tabAir.onclick=()=>panel("air");
 
-connect.onclick=connectWallet;
-selfMint.onclick=mintSelf;
-oneMint.onclick=mintOne;
-manyMint.onclick=mintMany;
-
-document.getElementById("selfMode")
-.onclick=()=>mode("self");
-
-document.getElementById("oneMode")
-.onclick=()=>mode("one");
-
-document.getElementById("manyMode")
-.onclick=()=>mode("many");
-
+document.getElementById("download").onclick=()=>{
+ const data={app:"NFT 1155 STUDIO 38",collection:collection.value,description:projectDesc.value,chain:chain.value,items};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nft-1155-project.json";a.click();
+};
 </script>
-
 </body>
 </html>
