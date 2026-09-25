@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>La Cucaracha by Tony Babel</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+  text-align: center;
+}
+.container {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 20px;
+}
+img {
+  width: 100%;
+  border-radius: 16px;
+}
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: bold;
+}
+#connect {
+  background: white;
+  color: black;
+}
+#mint {
+  background: #00d084;
+  color: black;
+}
+input {
+  width: 80px;
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+  margin-top: 15px;
+}
+#status {
+  margin-top: 20px;
+  word-break: break-word;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>La Cucaracha</h1>
+<h3>by Tony Babel</h3>
+
+<img src="https://raw.githubusercontent.com/Bedjo123/la-cucaracha/main/artwork.png">
+
+<h2>FREE MINT</h2>
+
+<p>Remaining: <span id="remaining">...</span></p>
+
+<button id="connect">CONNECT WALLET</button>
+
+<div>
+<input id="quantity" type="number" min="1" value="1">
+</div>
+
+<button id="mint" disabled>MINT</button>
+
+<div id="status"></div>
+
+</div>
+
+<script>
+const CONTRACT = "0x7eBaB889C8F04af49d9133a14A1d2DbD6D9ABbE8";
+const TOKEN_ID = 1;
+const MAX_SUPPLY = 100;
+const BASE_CHAIN_ID = "0x2105";
+
+const ABI = [
+  "function mint(uint256 quantity)",
+  "function totalMinted() view returns (uint256)",
+  "function MAX_SUPPLY() view returns (uint256)"
+];
+
+let provider;
+let signer;
+let contract;
+
+const connectBtn = document.getElementById("connect");
+const mintBtn = document.getElementById("mint");
+const statusEl = document.getElementById("status");
+const remainingEl = document.getElementById("remaining");
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    statusEl.innerText = "Wallet tidak ditemukan. Buka dengan MetaMask/OKX/Coinbase Wallet.";
+    return;
+  }
+
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: BASE_CHAIN_ID }]
+    });
+  } catch (e) {
+    statusEl.innerText = "Silakan pilih jaringan Base di wallet.";
+    return;
+  }
+
+  provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
+  contract = new ethers.Contract(CONTRACT, ABI, signer);
+
+  const address = await signer.getAddress();
+
+  connectBtn.innerText =
+    address.slice(0, 6) + "..." + address.slice(-4);
+
+  mintBtn.disabled = false;
+
+  await updateSupply();
+}
+
+async function updateSupply() {
+  if (!contract) return;
+
+  const minted = await contract.totalMinted();
+  const remaining = MAX_SUPPLY - Number(minted);
+
+  remainingEl.innerText = remaining;
+}
+
+async function mintNFT() {
+  if (!contract) return;
+
+  const quantity =
+    Number(document.getElementById("quantity").value);
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    statusEl.innerText = "Quantity tidak valid.";
+    return;
+  }
+
+  try {
+    mintBtn.disabled = true;
+    statusEl.innerText = "Menunggu konfirmasi wallet...";
+
+    const tx = await contract.mint(quantity);
+
+    statusEl.innerText =
+      "Transaksi dikirim: " + tx.hash;
+
+    await tx.wait();
+
+    statusEl.innerText =
+      "MINT BERHASIL! NFT masuk ke wallet kamu.";
+
+    await updateSupply();
+
+  } catch (e) {
+    statusEl.innerText =
+      "Mint gagal: " + (e.shortMessage || e.message);
+  }
+
+  mintBtn.disabled = false;
+}
+
+connectBtn.onclick = connectWallet;
+mintBtn.onclick = mintNFT;
+
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", () => {
+    location.reload();
+  });
+}
+</script>
+
+</body>
+</html>
