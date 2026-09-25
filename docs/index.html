@@ -1,59 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>La Cucaracha by Tony Babel</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: white;
-  text-align: center;
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial,sans-serif;
 }
-.container {
-  max-width: 420px;
-  margin: 40px auto;
-  padding: 20px;
+.container{
+  max-width:460px;
+  margin:auto;
+  padding:25px 18px 50px;
+  text-align:center;
 }
-img {
-  width: 100%;
-  border-radius: 16px;
+img{
+  width:100%;
+  max-height:430px;
+  object-fit:contain;
+  border-radius:16px;
 }
-button {
-  width: 100%;
-  padding: 15px;
-  margin-top: 12px;
-  border: 0;
-  border-radius: 10px;
-  font-size: 17px;
-  font-weight: bold;
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:0;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:bold;
 }
-#connect {
-  background: white;
-  color: black;
+.connect{
+  background:white;
+  color:black;
 }
-#mint {
-  background: #00d084;
-  color: black;
+.mint{
+  background:#00d084;
+  color:#000;
 }
-input {
-  width: 80px;
-  padding: 12px;
-  text-align: center;
-  font-size: 18px;
-  margin-top: 15px;
+.mode{
+  background:#333;
+  color:white;
 }
-#status {
-  margin-top: 20px;
-  word-break: break-word;
+.mode.active{
+  background:#666;
+}
+input,textarea{
+  width:100%;
+  box-sizing:border-box;
+  padding:13px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #555;
+  background:#222;
+  color:white;
+  font-size:15px;
+}
+textarea{
+  min-height:130px;
+}
+.hidden{
+  display:none;
+}
+#status{
+  margin-top:18px;
+  word-break:break-word;
+}
+.small{
+  color:#aaa;
 }
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
 <h1>La Cucaracha</h1>
@@ -63,123 +87,384 @@ input {
 
 <h2>FREE MINT</h2>
 
-<p>Remaining: <span id="remaining">...</span></p>
+<p>Remaining: <b id="remaining">...</b></p>
 
-<button id="connect">CONNECT WALLET</button>
+<button class="connect" id="connect">CONNECT WALLET</button>
 
-<div>
-<input id="quantity" type="number" min="1" value="1">
+<p id="wallet" class="small"></p>
+
+<hr>
+
+<button class="mode active" id="selfMode">
+MINT SENDIRI
+</button>
+
+<button class="mode" id="oneMode">
+MINT KE 1 WALLET
+</button>
+
+<button class="mode" id="manyMode">
+MINT KE BANYAK WALLET
+</button>
+
+<div id="selfBox">
+
+<input id="selfQty" type="number" min="1" value="1">
+
+<button class="mint" id="selfMint" disabled>
+MINT KE WALLET SENDIRI
+</button>
+
 </div>
 
-<button id="mint" disabled>MINT</button>
+<div id="oneBox" class="hidden">
+
+<input
+id="recipient"
+placeholder="0x... wallet penerima"
+>
+
+<input
+id="oneQty"
+type="number"
+min="1"
+value="1"
+>
+
+<button class="mint" id="oneMint" disabled>
+MINT KE WALLET
+</button>
+
+</div>
+
+<div id="manyBox" class="hidden">
+
+<p class="small">
+Satu wallet per baris. Format:<br>
+alamat,quantity
+</p>
+
+<textarea id="recipients"
+placeholder="0x1111...,1
+0x2222...,2
+0x3333...,1"></textarea>
+
+<button class="mint" id="manyMint" disabled>
+MINT KE BANYAK WALLET
+</button>
+
+</div>
 
 <div id="status"></div>
 
 </div>
 
 <script>
-const CONTRACT = "0x7eBaB889C8F04af49d9133a14A1d2DbD6D9ABbE8";
-const TOKEN_ID = 1;
+
+const CONTRACT =
+"0x7eBaB889C8F04af49d9133a14A1d2DbD6D9ABbE8";
+
 const MAX_SUPPLY = 100;
-const BASE_CHAIN_ID = "0x2105";
 
 const ABI = [
-  "function mint(uint256 quantity)",
-  "function totalMinted() view returns (uint256)",
-  "function MAX_SUPPLY() view returns (uint256)"
+"function mint(uint256 quantity)",
+"function mintTo(address recipient,uint256 quantity)",
+"function mintToMany(address[] recipients,uint256[] quantities)",
+"function totalMinted() view returns(uint256)"
 ];
+
+const CHAIN_ID = "0x2105";
 
 let provider;
 let signer;
 let contract;
 
-const connectBtn = document.getElementById("connect");
-const mintBtn = document.getElementById("mint");
-const statusEl = document.getElementById("status");
-const remainingEl = document.getElementById("remaining");
+const connect = document.getElementById("connect");
+const status = document.getElementById("status");
+const remaining = document.getElementById("remaining");
+const wallet = document.getElementById("wallet");
 
-async function connectWallet() {
-  if (!window.ethereum) {
-    statusEl.innerText = "Wallet tidak ditemukan. Buka dengan MetaMask/OKX/Coinbase Wallet.";
+const selfMint = document.getElementById("selfMint");
+const oneMint = document.getElementById("oneMint");
+const manyMint = document.getElementById("manyMint");
+
+async function connectWallet(){
+
+  if(!window.ethereum){
+    status.innerText =
+      "Wallet tidak ditemukan. Buka website dari browser/DApp browser wallet.";
     return;
   }
 
-  try {
+  try{
+
     await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: BASE_CHAIN_ID }]
+      method:"wallet_switchEthereumChain",
+      params:[{chainId:CHAIN_ID}]
     });
-  } catch (e) {
-    statusEl.innerText = "Silakan pilih jaringan Base di wallet.";
+
+  }catch(e){
+
+    status.innerText =
+      "Silakan pilih jaringan Base di wallet.";
     return;
+
   }
 
   provider = new ethers.BrowserProvider(window.ethereum);
+
   signer = await provider.getSigner();
-  contract = new ethers.Contract(CONTRACT, ABI, signer);
 
-  const address = await signer.getAddress();
+  contract =
+    new ethers.Contract(CONTRACT,ABI,signer);
 
-  connectBtn.innerText =
-    address.slice(0, 6) + "..." + address.slice(-4);
+  const address =
+    await signer.getAddress();
 
-  mintBtn.disabled = false;
+  wallet.innerText =
+    address.slice(0,8)+"..."+address.slice(-6);
+
+  connect.innerText = "WALLET CONNECTED";
+
+  selfMint.disabled=false;
+  oneMint.disabled=false;
+  manyMint.disabled=false;
 
   await updateSupply();
 }
 
-async function updateSupply() {
-  if (!contract) return;
+async function updateSupply(){
 
-  const minted = await contract.totalMinted();
-  const remaining = MAX_SUPPLY - Number(minted);
+  if(!contract) return;
 
-  remainingEl.innerText = remaining;
+  const minted =
+    Number(await contract.totalMinted());
+
+  remaining.innerText =
+    Math.max(0,MAX_SUPPLY-minted);
 }
 
-async function mintNFT() {
-  if (!contract) return;
+async function mintSelf(){
 
-  const quantity =
-    Number(document.getElementById("quantity").value);
+  try{
 
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    statusEl.innerText = "Quantity tidak valid.";
-    return;
-  }
+    const qty =
+      Number(document.getElementById("selfQty").value);
 
-  try {
-    mintBtn.disabled = true;
-    statusEl.innerText = "Menunggu konfirmasi wallet...";
+    if(!Number.isInteger(qty)||qty<1){
+      status.innerText="Quantity tidak valid.";
+      return;
+    }
 
-    const tx = await contract.mint(quantity);
+    selfMint.disabled=true;
 
-    statusEl.innerText =
-      "Transaksi dikirim: " + tx.hash;
+    status.innerText=
+      "Konfirmasi transaksi di wallet...";
+
+    const tx =
+      await contract.mint(qty);
+
+    status.innerText=
+      "Transaksi: "+tx.hash;
 
     await tx.wait();
 
-    statusEl.innerText =
-      "MINT BERHASIL! NFT masuk ke wallet kamu.";
+    status.innerText=
+      "MINT BERHASIL.";
 
     await updateSupply();
 
-  } catch (e) {
-    statusEl.innerText =
-      "Mint gagal: " + (e.shortMessage || e.message);
+  }catch(e){
+
+    status.innerText=
+      "Gagal: "+(e.shortMessage||e.message);
+
   }
 
-  mintBtn.disabled = false;
+  selfMint.disabled=false;
 }
 
-connectBtn.onclick = connectWallet;
-mintBtn.onclick = mintNFT;
+async function mintOne(){
 
-if (window.ethereum) {
-  window.ethereum.on("accountsChanged", () => {
-    location.reload();
-  });
+  try{
+
+    const recipient =
+      document.getElementById("recipient").value.trim();
+
+    const qty =
+      Number(document.getElementById("oneQty").value);
+
+    if(!ethers.isAddress(recipient)){
+      status.innerText="Alamat wallet tidak valid.";
+      return;
+    }
+
+    if(!Number.isInteger(qty)||qty<1){
+      status.innerText="Quantity tidak valid.";
+      return;
+    }
+
+    oneMint.disabled=true;
+
+    status.innerText=
+      "Konfirmasi transaksi di wallet...";
+
+    const tx =
+      await contract.mintTo(recipient,qty);
+
+    status.innerText=
+      "Transaksi: "+tx.hash;
+
+    await tx.wait();
+
+    status.innerText=
+      "NFT berhasil dikirim ke wallet penerima.";
+
+    await updateSupply();
+
+  }catch(e){
+
+    status.innerText=
+      "Gagal: "+(e.shortMessage||e.message);
+
+  }
+
+  oneMint.disabled=false;
 }
+
+async function mintMany(){
+
+  try{
+
+    const text =
+      document.getElementById("recipients").value.trim();
+
+    if(!text){
+      status.innerText="Masukkan daftar wallet.";
+      return;
+    }
+
+    const lines =
+      text.split("\n")
+      .map(x=>x.trim())
+      .filter(Boolean);
+
+    const addresses=[];
+    const quantities=[];
+
+    for(const line of lines){
+
+      const parts =
+        line.split(",").map(x=>x.trim());
+
+      if(parts.length!==2){
+        throw new Error(
+          "Format harus: alamat,quantity"
+        );
+      }
+
+      const address=parts[0];
+      const qty=Number(parts[1]);
+
+      if(!ethers.isAddress(address)){
+        throw new Error(
+          "Alamat tidak valid: "+address
+        );
+      }
+
+      if(!Number.isInteger(qty)||qty<1){
+        throw new Error(
+          "Quantity tidak valid: "+address
+        );
+      }
+
+      addresses.push(address);
+      quantities.push(qty);
+    }
+
+    const total =
+      quantities.reduce((a,b)=>a+b,0);
+
+    const current =
+      Number(await contract.totalMinted());
+
+    if(current+total>MAX_SUPPLY){
+      throw new Error(
+        "Melebihi supply. Sisa: "+
+        (MAX_SUPPLY-current)
+      );
+    }
+
+    manyMint.disabled=true;
+
+    status.innerText=
+      "Konfirmasi batch mint di wallet...";
+
+    const tx =
+      await contract.mintToMany(
+        addresses,
+        quantities
+      );
+
+    status.innerText=
+      "Transaksi: "+tx.hash;
+
+    await tx.wait();
+
+    status.innerText=
+      "BATCH MINT BERHASIL: "+
+      addresses.length+" wallet.";
+
+    await updateSupply();
+
+  }catch(e){
+
+    status.innerText=
+      "Gagal: "+(e.shortMessage||e.message);
+
+  }
+
+  manyMint.disabled=false;
+}
+
+function mode(type){
+
+  document.getElementById("selfBox")
+    .classList.toggle("hidden",type!=="self");
+
+  document.getElementById("oneBox")
+    .classList.toggle("hidden",type!=="one");
+
+  document.getElementById("manyBox")
+    .classList.toggle("hidden",type!=="many");
+
+  document.querySelectorAll(".mode")
+    .forEach(x=>x.classList.remove("active"));
+
+  if(type==="self")
+    document.getElementById("selfMode").classList.add("active");
+
+  if(type==="one")
+    document.getElementById("oneMode").classList.add("active");
+
+  if(type==="many")
+    document.getElementById("manyMode").classList.add("active");
+}
+
+connect.onclick=connectWallet;
+selfMint.onclick=mintSelf;
+oneMint.onclick=mintOne;
+manyMint.onclick=mintMany;
+
+document.getElementById("selfMode")
+.onclick=()=>mode("self");
+
+document.getElementById("oneMode")
+.onclick=()=>mode("one");
+
+document.getElementById("manyMode")
+.onclick=()=>mode("many");
+
 </script>
 
 </body>
