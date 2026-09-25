@@ -64,7 +64,7 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
   const msg=document.getElementById("unlockMsg");
   // The expected password is intentionally not stored in plaintext here.
   // Replace PASSWORD_HASH below with a SHA-256 hash you generate locally.
-  const PASSWORD_HASH="TEMPEL_HASH_DI_SINI";
+  const PASSWORD_HASH="PASTE_HASH_DI_SINI";
   async function sha256(s){
     const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
     return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
@@ -73,7 +73,7 @@ button:hover{filter:brightness(1.08)}.secondary{background:#fff;color:#0a0a0c;bo
   if(localStorage.getItem(KEY)==="1") openApp();
   async function unlock(){
     const h=await sha256(input.value);
-    if(PASSWORD_HASH!=="TEMPEL_HASH_DI_SINI" && h===PASSWORD_HASH){
+    if(PASSWORD_HASH!=="PASTE_HASH_DI_SINI" && h===PASSWORD_HASH){
       localStorage.setItem(KEY,"1"); openApp(); msg.textContent="";
     } else msg.textContent="Invalid password.";
   }
